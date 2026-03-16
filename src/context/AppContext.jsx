@@ -3,10 +3,16 @@ import { Snackbar, Alert } from "@mui/material";
 
 export const AppContext = createContext();
 
-export function AppProvider({ children }) {
+export function AppProvider({ children, isDarkMode, setIsDarkMode }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [cartItems, setCartItems] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [requestHistoryCache, setRequestHistoryCache] = useState({
+    phone: "",
+    serviceList: [],
+    productList: [],
+  });
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -134,11 +140,25 @@ export function AppProvider({ children }) {
 
   const closeSnackbar = () => setSnackbar((s) => ({ ...s, open: false }));
 
+  const setRequestHistory = (phone, serviceList, productList) => {
+    setRequestHistoryCache({
+      phone: phone || "",
+      serviceList: Array.isArray(serviceList) ? serviceList : [],
+      productList: Array.isArray(productList) ? productList : [],
+    });
+  };
+
   return (
     <AppContext.Provider
       value={{
         selectedCategory,
         setSelectedCategory,
+        searchQuery,
+        setSearchQuery,
+        isDarkMode,
+        setIsDarkMode,
+        requestHistoryCache,
+        setRequestHistory,
         requests,
         createRequest,
         getRequestsByMobile,

@@ -20,13 +20,19 @@ import {
   ShoppingCart as CartIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
+import {
+  DarkMode as DarkModeIcon,
+  LightMode as LightModeIcon,
+} from "@mui/icons-material";
 import { AppContext } from "../context/AppContext";
+import { saveProductRequests } from "../service/ProductRequestService";
 
 function Header() {
   const { tenantId, roomId } = useParams();
-  const [searchQuery, setSearchQuery] = useState("");
   const [cartOpen, setCartOpen] = useState(false);
   const {
+    searchQuery,
+    setSearchQuery,
     cartItems,
     removeFromCart,
     updateCartItemQuantity,
@@ -34,6 +40,8 @@ function Header() {
     clearCart,
     createRequest,
     showSnackbar,
+    isDarkMode,
+    setIsDarkMode,
   } = useContext(AppContext);
 
   // Mock room name - in real app, fetch from API
@@ -41,10 +49,10 @@ function Header() {
 
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [custName, setCustName] = useState("");
-  const [custEmail, setCustEmail] = useState("");
   const [custMobile, setCustMobile] = useState("");
   const [custDescription, setCustDescription] = useState("");
   const [checkoutErrors, setCheckoutErrors] = useState({});
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const validateCheckout = () => {
     const errs = {};
@@ -126,7 +134,9 @@ function Header() {
                         {item.name}
                       </Typography>
                       <Typography variant="caption" color="textSecondary">
-                        {item.category}
+                        {typeof item.category === "object"
+                          ? item.category?.name ?? item.category?.displayName
+                          : item.category}
                       </Typography>
                     </Box>
                     <IconButton
@@ -229,36 +239,77 @@ function Header() {
     </Drawer>
   );
 
-  const handleSubmitCheckout = () => {
+  const handleSubmitCheckout = async () => {
     const errs = validateCheckout();
     setCheckoutErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
-    // Create requests for each cart item
-    cartItems.forEach((item) => {
-      const itemDescription = `${item.type === "product" ? "Product Order" : "Service Request"}: ${item.name} ${item.quantity ? " x" + item.quantity : ""}`;
-      createRequest({
-        name: custName,
-        email: custEmail,
-        mobile: custMobile,
-        description: custDescription
-          ? `${custDescription} — ${itemDescription}`
-          : itemDescription,
-        category: item.category,
-        tenantId,
-        roomId,
-      });
-    });
+    const productItems = cartItems.filter((i) => i.type === "product");
+    const serviceItems = cartItems.filter((i) => i.type === "service");
 
-    clearCart();
-    setCheckoutOpen(false);
-    setCartOpen(false);
-    setCustName("");
-    setCustEmail("");
-    setCustMobile("");
-    setCustDescription("");
-    setCheckoutErrors({});
-    showSnackbar("Order placed and requests created", "success");
+    if (productItems.length > 0) {
+      setCheckoutLoading(true);
+      const locationId = localStorage.getItem("locationId");
+      try {
+        const payload = productItems.map((item) => ({
+          product: {
+            id: item.id,
+            productQuantity: item.quantity || 1,
+          },
+          room: { id: roomId },
+          tenantId,
+          locationId,
+          userName: custName.trim() || "",
+          phoneNumber: custMobile.trim(),
+          comment: custDescription.trim() || "",
+          quantity: item.quantity || 1,
+          amount: (item.price || 0) * (item.quantity || 1),
+          histories: [{ comment: "" }],
+        }));
+        await saveProductRequests(tenantId, roomId, payload);
+        clearCart();
+        setCheckoutOpen(false);
+        setCartOpen(false);
+        setCustName("");
+        setCustMobile("");
+        setCustDescription("");
+        setCheckoutErrors({});
+        showSnackbar("Product order placed successfully.", "success");
+      } catch (err) {
+        showSnackbar(
+          err?.response?.data?.error?.message ||
+            err?.message ||
+            "Failed to place order.",
+          "error"
+        );
+      } finally {
+        setCheckoutLoading(false);
+      }
+    } else {
+      serviceItems.forEach((item) => {
+        createRequest({
+          name: custName,
+          mobile: custMobile,
+          description: custDescription,
+          category: item.category,
+          tenantId,
+          roomId,
+        });
+      });
+      clearCart();
+      setCheckoutOpen(false);
+      setCartOpen(false);
+      setCustName("");
+      setCustMobile("");
+      setCustDescription("");
+      setCheckoutErrors({});
+      showSnackbar(
+        serviceItems.length > 0
+          ? "Service requests added. Submit from Services page."
+          : "Cart is empty.",
+        "info"
+      );
+    }
   };
 
   const CheckoutDialog = (
@@ -278,13 +329,6 @@ function Header() {
             onChange={(e) => setCustName(e.target.value)}
             error={!!checkoutErrors.name}
             helperText={checkoutErrors.name}
-          />
-          <TextField
-            label="Email"
-            size="small"
-            fullWidth
-            value={custEmail}
-            onChange={(e) => setCustEmail(e.target.value)}
           />
           <TextField
             label="Mobile"
@@ -307,9 +351,15 @@ function Header() {
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={() => setCheckoutOpen(false)}>Cancel</Button>
-        <Button variant="contained" onClick={handleSubmitCheckout}>
-          Place Order
+        <Button onClick={() => setCheckoutOpen(false)} disabled={checkoutLoading}>
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleSubmitCheckout}
+          disabled={checkoutLoading}
+        >
+          {checkoutLoading ? "Placing..." : "Place Order"}
         </Button>
       </DialogActions>
     </Dialog>
@@ -365,15 +415,26 @@ function Header() {
             </Box>
           </Stack>
 
-          {/* Cart Icon */}
-          <IconButton
-            onClick={() => setCartOpen(true)}
-            sx={{ color: "inherit" }}
-          >
-            <Badge badgeContent={cartItems.length} color="error">
-              <CartIcon />
-            </Badge>
-          </IconButton>
+          {/* Theme toggle + Cart Icon */}
+          <Stack direction="row" spacing={1} alignItems="center">
+            <IconButton
+              onClick={() => setIsDarkMode && setIsDarkMode(!isDarkMode)}
+              sx={{ color: "inherit" }}
+              aria-label="Toggle theme"
+              size="small"
+            >
+              {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
+            </IconButton>
+
+            <IconButton
+              onClick={() => setCartOpen(true)}
+              sx={{ color: "inherit" }}
+            >
+              <Badge badgeContent={cartItems.length} color="error">
+                <CartIcon />
+              </Badge>
+            </IconButton>
+          </Stack>
         </Stack>
 
         {/* Search Bar */}

@@ -10,16 +10,22 @@ import {
   Explore as ExploreIcon,
   MoreHoriz as MoreIcon,
 } from "@mui/icons-material";
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 
 function BottomNavBar() {
-  const [value, setValue] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
   const { tenantId, roomId } = useParams();
 
+  const pathname = location.pathname;
+  const basePath = `/t/${tenantId}/r/${roomId}`;
+  const value = pathname === `${basePath}` ? 0
+    : pathname.startsWith(`${basePath}/requests`) ? 1
+    : pathname.startsWith(`${basePath}/explore`) ? 2
+    : pathname.startsWith(`${basePath}/more`) ? 3
+    : 0;
+
   const handleNavigation = (newValue, path) => {
-    setValue(newValue);
     navigate(path);
   };
 
@@ -58,28 +64,26 @@ function BottomNavBar() {
           <BottomNavigationAction
             icon={<HomeIcon />}
             label="Home"
-            onClick={() => handleNavigation(0, `/t/${tenantId}/r/${roomId}`)}
+            value={0}
+            onClick={() => handleNavigation(0, `${basePath}`)}
           />
           <BottomNavigationAction
             icon={<RequestsIcon />}
             label="Requests"
-            onClick={() =>
-              handleNavigation(1, `/t/${tenantId}/r/${roomId}/requests`)
-            }
+            value={1}
+            onClick={() => handleNavigation(1, `${basePath}/requests`)}
           />
           <BottomNavigationAction
             icon={<ExploreIcon />}
             label="Explore"
-            onClick={() =>
-              handleNavigation(2, `/t/${tenantId}/r/${roomId}/explore`)
-            }
+            value={2}
+            onClick={() => handleNavigation(2, `${basePath}/explore`)}
           />
           <BottomNavigationAction
             icon={<MoreIcon />}
             label="More"
-            onClick={() =>
-              handleNavigation(3, `/t/${tenantId}/r/${roomId}/more`)
-            }
+            value={3}
+            onClick={() => handleNavigation(3, `${basePath}/more`)}
           />
         </BottomNavigation>
       </Paper>

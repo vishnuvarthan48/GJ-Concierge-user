@@ -1,4 +1,3 @@
-import { useState, useContext } from "react";
 import {
   Box,
   Stack,
@@ -6,136 +5,42 @@ import {
   CardContent,
   Typography,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  CircularProgress,
 } from "@mui/material";
-import { AppContext } from "../../context/AppContext";
+import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import {
+  getServicesApiUrl,
+  getServicesByCategoryApiUrl,
+} from "../../service/ApiUrls";
+import { get } from "../../service/Service";
 
-const ALL_SERVICES = [
-  // Room Service
-  {
-    id: 1,
-    category: "Room Service",
-    name: "Hot Water Not Coming",
-    description: "Request for hot water issue",
-    priority: "Medium",
-    icon: "🚿",
-  },
-  {
-    id: 2,
-    category: "Room Service",
-    name: "AC Temperature Issue",
-    description: "AC not cooling properly",
-    priority: "High",
-    icon: "❄️",
-  },
-  {
-    id: 3,
-    category: "Room Service",
-    name: "Room Key Issue",
-    description: "Key card not working",
-    priority: "High",
-    icon: "🔑",
-  },
+function Services({ tenantId, locationId, category }) {
+  const navigate = useNavigate();
+  const { roomId } = useParams();
 
-  // Housekeeping
-  {
-    id: 4,
-    category: "Housekeeping",
-    name: "Room Cleaning",
-    description: "Request for room cleaning",
-    priority: "Low",
-    icon: "🧹",
-  },
-  {
-    id: 5,
-    category: "Housekeeping",
-    name: "Towel Replacement",
-    description: "Need fresh towels",
-    priority: "Low",
-    icon: "🛁",
-  },
-  {
-    id: 6,
-    category: "Housekeeping",
-    name: "Bed Sheet Change",
-    description: "Change bed sheets",
-    priority: "Low",
-    icon: "🛏️",
-  },
+  const fetchServices = async () => {
+    const url = category
+      ? getServicesByCategoryApiUrl(tenantId, locationId, category)
+      : getServicesApiUrl(tenantId, locationId);
+    return await get(url);
+  };
 
-  // Maintenance
-  {
-    id: 7,
-    category: "Maintenance",
-    name: "Light Bulb Issue",
-    description: "Light not working",
-    priority: "Medium",
-    icon: "💡",
-  },
-  {
-    id: 8,
-    category: "Maintenance",
-    name: "Fan Not Working",
-    description: "Ceiling fan malfunction",
-    priority: "Medium",
-    icon: "🌀",
-  },
-  {
-    id: 9,
-    category: "Maintenance",
-    name: "Door Lock Issue",
-    description: "Door lock not functioning",
-    priority: "High",
-    icon: "🔐",
-  },
+  const {
+    data: services = [],
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["services", tenantId, locationId, category],
+    queryFn: fetchServices,
+    enabled: !!tenantId && !!locationId,
+  });
 
-  // Front Desk
-  {
-    id: 10,
-    category: "Front Desk",
-    name: "Wake Up Call",
-    description: "Request a wake up call",
-    priority: "Low",
-    icon: "⏰",
-  },
-  {
-    id: 11,
-    category: "Front Desk",
-    name: "Restaurant Reservation",
-    description: "Book table at restaurant",
-    priority: "Low",
-    icon: "🍽️",
-  },
-
-  // Snack Bars (if applicable)
-  {
-    id: 12,
-    category: "Snack Bars",
-    name: "Vending Machine Issue",
-    description: "Snack machine not working",
-    priority: "Low",
-    icon: "🍿",
-  },
-];
-
-function Services({ category }) {
-  const [selectedService, setSelectedService] = useState(null);
-  const { addToCart, showSnackbar } = useContext(AppContext);
-
-  const filteredServices = category
-    ? ALL_SERVICES.filter((s) => s.category === category)
-    : ALL_SERVICES;
-
-  const handleAddService = (service) => {
-    addToCart({
-      ...service,
-      type: "service",
-      price: 0, // Services might be free
+  const handleServiceClick = (service) => {
+    if (!tenantId || !roomId) return;
+    navigate(`/t/${tenantId}/r/${roomId}/service-request`, {
+      state: { selectedService: service },
     });
-    showSnackbar(`${service.name} added to cart!`, "success");
   };
 
   const getPriorityColor = (priority) => {
@@ -151,16 +56,35 @@ function Services({ category }) {
     }
   };
 
+  if (isLoading) {
+    return (
+      <Box sx={{ textAlign: "center", py: 4 }}>
+        <CircularProgress />
+        <Typography>Loading services...</Typography>
+      </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Box sx={{ textAlign: "center", py: 4 }}>
+        <Typography color="error">
+          Failed to load services. Please try again.
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
     <Stack spacing={2}>
-      {filteredServices.length === 0 ? (
+      {!services || services.length === 0 ? (
         <Box sx={{ textAlign: "center", py: 4 }}>
           <Typography color="textSecondary">
             No services available for this category
           </Typography>
         </Box>
       ) : (
-        filteredServices.map((service) => (
+        services.map((service) => (
           <Card
             key={service.id}
             sx={{
@@ -171,7 +95,7 @@ function Services({ category }) {
                 transform: "translateY(-2px)",
               },
             }}
-            onClick={() => setSelectedService(service)}
+            onClick={() => handleServiceClick(service)}
           >
             <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
               <Stack direction="row" spacing={2} alignItems="flex-start">
@@ -218,11 +142,11 @@ function Services({ category }) {
                       variant="contained"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleAddService(service);
+                        handleServiceClick(service);
                       }}
                       sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
                     >
-                      Add
+                      Request
                     </Button>
                   </Stack>
                 </Box>

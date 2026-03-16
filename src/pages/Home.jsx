@@ -1,121 +1,315 @@
 import {
   Box,
   Stack,
-  TextField,
   Card,
   CardContent,
   Typography,
+  CircularProgress,
+  Chip,
 } from "@mui/material";
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { AppContext } from "../context/AppContext";
 import Header from "../layout/Header";
 import BottomNavBar from "../layout/BottomNavBar";
+import { getRoomDetail, getCategories, getServices } from "../service/RoomService";
 
 function Home() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [roomName, setRoomName] = useState("");
+  const [headerTitle, setHeaderTitle] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [roomError, setRoomError] = useState(false);
+  const [categoriesError, setCategoriesError] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [locationId, setLocationId] = useState(
+    () => localStorage.getItem("locationId"),
+  );
   const navigate = useNavigate();
   const { tenantId, roomId } = useParams();
-  const { setSelectedCategory } = useContext(AppContext);
+  const { setSelectedCategory, searchQuery } = useContext(AppContext);
 
-  // Mock categories
-  const categories = [
-    { id: 1, name: "Snack Bars", icon: "🍿" },
-    { id: 2, name: "Beverages", icon: "🥤" },
-    { id: 3, name: "Room Service", icon: "🛎️" },
-    { id: 4, name: "Housekeeping", icon: "🧹" },
-    { id: 5, name: "Maintenance", icon: "🔧" },
-    { id: 6, name: "Front Desk", icon: "📋" },
-  ];
+  // When app is opened: fetch room details, then categories
+  useEffect(() => {
+    if (!tenantId || !roomId) return;
+
+    const fetchRoomDetails = async () => {
+      setLoading(true);
+      setRoomError(false);
+      setCategoriesError(false);
+      let locId = null;
+      try {
+        const response = await getRoomDetail(tenantId, roomId);
+        if (response) {
+          if (response.location) {
+            locId = response.location.id;
+            localStorage.setItem("locationId", locId);
+            localStorage.setItem("locationName", response.location.name);
+            setLocationId(locId);
+          } else {
+            alert("Location not found.");
+          }
+          setRoomName(response.name);
+          localStorage.setItem("roomName", response.name);
+          localStorage.setItem("location", response.id);
+          setHeaderTitle("Hello!. You are in " + response?.name);
+        } else {
+          setRoomError(true);
+        }
+      } catch {
+        setRoomError(true);
+      }
+
+      const idToUse = locId || localStorage.getItem("locationId");
+      if (tenantId && idToUse) {
+        try {
+          const categoriesData = await getCategories(tenantId, idToUse);
+          const list = Array.isArray(categoriesData)
+            ? categoriesData
+            : categoriesData?.list ?? [];
+          setCategories(list);
+        } catch {
+          setCategoriesError(true);
+          setCategories([]);
+        }
+      }
+      setLoading(false);
+    };
+
+    fetchRoomDetails();
+  }, [tenantId, roomId]);
+
+  // Keep locationId in sync from localStorage (e.g. after first load)
+  const effectiveLocationId =
+    locationId || localStorage.getItem("locationId");
+
+  const {
+    data: servicesList = [],
+    isLoading: isServicesLoading,
+    isError: isServicesError,
+  } = useQuery({
+    queryKey: ["services", tenantId, effectiveLocationId],
+    queryFn: () => getServices(tenantId, effectiveLocationId),
+    enabled: !!tenantId && !!effectiveLocationId && !loading,
+  });
+
+  const services = Array.isArray(servicesList)
+    ? servicesList
+    : servicesList?.list ?? [];
+
+  const q = (searchQuery || "").trim().toLowerCase();
+  const filteredCategories = q
+    ? (categories || []).filter(
+        (c) =>
+          (c.name || "").toLowerCase().includes(q) ||
+          (c.title || "").toLowerCase().includes(q)
+      )
+    : categories || [];
+  const filteredServices = q
+    ? services.filter(
+        (s) =>
+          (s.name || "").toLowerCase().includes(q) ||
+          (s.description || "").toLowerCase().includes(q) ||
+          (s.category?.name || "").toLowerCase().includes(q)
+      )
+    : services;
 
   return (
     <Box sx={{ width: "100%" }}>
-      {/* Header */}
-      <Header />
-
-      {/* Main Content */}
+      <Header title={headerTitle} />
       <Box sx={{ px: { xs: 1, sm: 2 }, py: { xs: 2, sm: 3 } }}>
-        {/* Search Bar in Content (optional secondary search) */}
-        <TextField
-          fullWidth
-          placeholder="Search categories..."
-          size="small"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          sx={{
-            mb: 3,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "8px",
-            },
-          }}
-        />
+        {loading && (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress />
+          </Box>
+        )}
 
-        {/* Categories Section */}
-        <Typography
-          variant="subtitle2"
-          sx={{ mb: 2, fontWeight: "bold", color: "text.primary" }}
-        >
-          Categories
-        </Typography>
+        {roomError && (
+          <Typography color="error" sx={{ mb: 2 }}>
+            Failed to load room details.
+          </Typography>
+        )}
+        {categoriesError && (
+          <Typography color="error" sx={{ mb: 2 }}>
+            Failed to load categories.
+          </Typography>
+        )}
 
-        <Stack spacing={2}>
-          {categories.map((category) => (
-            <Card
-              key={category.id}
+        {!loading && (
+          <>
+            <Typography
+              variant="subtitle2"
+              sx={{ mb: 2, fontWeight: "bold", color: "text.primary" }}
+            >
+              Categories
+            </Typography>
+            <Box
               sx={{
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  boxShadow: 3,
-                  transform: "translateY(-2px)",
+                display: "flex",
+                flexDirection: "row",
+                gap: 1,
+                overflowX: "auto",
+                pb: 1,
+                mb: 3,
+                "&::-webkit-scrollbar": { height: 6 },
+                "&::-webkit-scrollbar-thumb": {
+                  bgcolor: "action.hover",
+                  borderRadius: 3,
                 },
               }}
-              onClick={() => {
-                setSelectedCategory(category.name);
-                navigate(`/t/${tenantId}/r/${roomId}/explore`);
-              }}
             >
-              <CardContent
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  p: { xs: 1.5, sm: 2 },
-                }}
-              >
-                <Box sx={{ fontSize: { xs: "1.5rem", sm: "2rem" } }}>
-                  {category.icon}
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      fontWeight: 500,
-                      fontSize: { xs: "0.95rem", sm: "1rem" },
-                    }}
-                  >
-                    {category.name}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    bgcolor: "primary.main",
-                    color: "primary.contrastText",
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: "4px",
+              {filteredCategories.map((category) => (
+                <Chip
+                  key={category.id}
+                  label={category.name || category.title || category.id}
+                  onClick={() => {
+                    const categoryPayload = {
+                      id: category.id,
+                      name: category.name || category.title || String(category.id),
+                    };
+                    setSelectedCategory(categoryPayload);
+                    navigate(`/t/${tenantId}/r/${roomId}/explore`, {
+                      state: { category: categoryPayload },
+                    });
                   }}
-                >
-                  →
-                </Typography>
-              </CardContent>
-            </Card>
-          ))}
-        </Stack>
-      </Box>
+                  sx={{
+                    flexShrink: 0,
+                    cursor: "pointer",
+                    "&:hover": { bgcolor: "primary.light" },
+                  }}
+                />
+              ))}
+            </Box>
 
-      {/* Bottom Navbar */}
+            <Typography
+              variant="subtitle2"
+              sx={{ mb: 2, fontWeight: "bold", color: "text.primary" }}
+            >
+              All Services
+            </Typography>
+            {isServicesLoading && (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                <CircularProgress />
+              </Box>
+            )}
+            {isServicesError && (
+              <Typography color="error" sx={{ mb: 2 }}>
+                Failed to load services.
+              </Typography>
+            )}
+            {!isServicesLoading && !isServicesError && (
+              <Stack spacing={2}>
+                {filteredServices.length === 0 ? (
+                  <Typography color="text.secondary">
+                    {q ? "No services match your search." : "No services available."}
+                  </Typography>
+                ) : (
+                  filteredServices.map((service) => (
+                    <Card
+                      key={service.id}
+                      sx={{
+                        cursor: "pointer",
+                        transition: "all 0.3s ease",
+                        "&:hover": {
+                          boxShadow: 3,
+                          transform: "translateY(-2px)",
+                        },
+                      }}
+                      onClick={() => {
+                        navigate(
+                          `/t/${tenantId}/r/${roomId}/service-request`,
+                          { state: { selectedService: service } },
+                        );
+                      }}
+                    >
+                      <CardContent
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          p: { xs: 1.5, sm: 2 },
+                        }}
+                      >
+                        <Box sx={{ fontSize: { xs: "1.5rem", sm: "2rem" } }}>
+                          {service.imageUrl ? (
+                            <Box
+                              component="img"
+                              src={service.imageUrl}
+                              alt=""
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                objectFit: "cover",
+                                borderRadius: 1,
+                              }}
+                            />
+                          ) : (
+                            "🔧"
+                          )}
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              fontWeight: 500,
+                              fontSize: { xs: "0.95rem", sm: "1rem" },
+                            }}
+                          >
+                            {service.name}
+                          </Typography>
+                          {service.description && (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ display: "block", mt: 0.5 }}
+                            >
+                              {service.description}
+                            </Typography>
+                          )}
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            sx={{ mt: 1 }}
+                            flexWrap="wrap"
+                          >
+                            {service.category?.name && (
+                              <Chip
+                                size="small"
+                                label={service.category.name}
+                                sx={{ height: 22, fontSize: "0.75rem" }}
+                              />
+                            )}
+                            {service.tat && (
+                              <Chip
+                                size="small"
+                                label={`TAT: ${service.tat}`}
+                                variant="outlined"
+                                sx={{ height: 22, fontSize: "0.75rem" }}
+                              />
+                            )}
+                          </Stack>
+                        </Box>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            bgcolor: "primary.main",
+                            color: "primary.contrastText",
+                            px: 1,
+                            py: 0.5,
+                            borderRadius: "4px",
+                          }}
+                        >
+                          →
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </Stack>
+            )}
+          </>
+        )}
+      </Box>
       <BottomNavBar />
     </Box>
   );
