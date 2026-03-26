@@ -14,7 +14,7 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import {
   ShoppingCart as CartIcon,
@@ -26,6 +26,7 @@ import {
 } from "@mui/icons-material";
 import { AppContext } from "../context/AppContext";
 import { saveProductRequests } from "../service/ProductRequestService";
+import { getRoomDetail } from "../service/RoomService";
 
 function Header() {
   const { tenantId, roomId } = useParams();
@@ -44,8 +45,37 @@ function Header() {
     setIsDarkMode,
   } = useContext(AppContext);
 
-  // Mock room name - in real app, fetch from API
-  const roomName = "Room 1";
+  const [roomDisplayName, setRoomDisplayName] = useState(() => {
+    try {
+      return localStorage.getItem("roomName") || "";
+    } catch {
+      return "";
+    }
+  });
+
+  useEffect(() => {
+    if (!tenantId || !roomId) return;
+    try {
+      const cached = localStorage.getItem("roomName");
+      if (cached) setRoomDisplayName(cached);
+    } catch {
+      /* ignore */
+    }
+    let cancelled = false;
+    (async () => {
+      const detail = await getRoomDetail(tenantId, roomId);
+      if (cancelled || !detail?.name) return;
+      setRoomDisplayName(detail.name);
+      try {
+        localStorage.setItem("roomName", detail.name);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId, roomId]);
 
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [custName, setCustName] = useState("");
@@ -410,7 +440,7 @@ function Header() {
                   fontSize: { xs: "1rem", sm: "1.1rem" },
                 }}
               >
-                {roomName}
+                {roomDisplayName || "…"}
               </Typography>
             </Box>
           </Stack>

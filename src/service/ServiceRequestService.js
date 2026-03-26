@@ -38,10 +38,11 @@ export const saveServiceRequest = async (tenantId, roomId, data) => {
     // Backend may return 200 with error in body
     if (resData?.error) {
       const msg =
-        resData.error.message ||
         resData.error.detailsMessage ||
+        resData.error.message ||
         "Request failed.";
       const err = new Error(msg);
+      err.data = resData;
       throw err;
     }
     return resData?.data ?? resData?.list ?? resData;
@@ -49,13 +50,17 @@ export const saveServiceRequest = async (tenantId, roomId, data) => {
     console.error("Error saving service request:", error);
     // 412 or other non-2xx: axios throws, error.response is set
     const body = error.response?.data;
+    const errObj = body?.error || body;
     const msg =
+      errObj?.detailsMessage ||
+      errObj?.message ||
       body?.error?.message ||
       body?.error?.detailsMessage ||
       error.message ||
       "Failed to submit service request.";
     const errToThrow = new Error(msg);
     errToThrow.response = error.response;
+    errToThrow.data = body;
     throw errToThrow;
   }
 };

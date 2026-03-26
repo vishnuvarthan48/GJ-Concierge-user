@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -33,6 +33,10 @@ import {
   getProductRequestHistoryByPhone,
 } from "../service/ServiceRequestService";
 import { AppContext } from "../context/AppContext";
+import {
+  getStoredGuestPhone,
+  setStoredGuestPhone,
+} from "../utils/guestPhoneStorage";
 
 const DEFAULT_STEPS = ["Open", "Assigned", "In Progress", "Completed", "Closed"];
 
@@ -111,60 +115,82 @@ const TAB_PRODUCT = 1;
 function Requests() {
   const { tenantId, roomId } = useParams();
   const navigate = useNavigate();
-  const { requestHistoryCache, setRequestHistory } = useContext(AppContext);
+  const { setRequestHistory } = useContext(AppContext);
 
   const [tabValue, setTabValue] = useState(TAB_SERVICE);
-  const [lookupMobile, setLookupMobile] = useState(requestHistoryCache.phone);
-  const [foundServiceRequests, setFoundServiceRequests] = useState(requestHistoryCache.serviceList);
-  const [foundProductRequests, setFoundProductRequests] = useState(requestHistoryCache.productList);
+  const [lookupMobile, setLookupMobile] = useState(() =>
+    getStoredGuestPhone(tenantId, roomId).trim(),
+  );
+  const [foundServiceRequests, setFoundServiceRequests] = useState([]);
+  const [foundProductRequests, setFoundProductRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [hasSearched, setHasSearched] = useState(!!requestHistoryCache.phone);
+  const [hasSearched, setHasSearched] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [activeRequest, setActiveRequest] = useState(null);
   const [activeRequestType, setActiveRequestType] = useState("service"); // "service" | "product"
 
-  const handleLookup = async () => {
-    const phone = lookupMobile.trim();
-    if (!phone) {
-      setError("Enter mobile number to fetch requests.");
-      return;
-    }
-    const locationId = localStorage.getItem("locationId");
-    if (!tenantId || !locationId) {
-      setError("Location not set. Open Home first.");
-      return;
-    }
-    setHasSearched(true);
-    setError("");
-    setLoading(true);
-    setFoundServiceRequests([]);
-    setFoundProductRequests([]);
-    try {
-      const [serviceList, productList] = await Promise.all([
-        getServiceRequestHistoryByPhone(tenantId, locationId, phone),
-        getProductRequestHistoryByPhone(tenantId, locationId, phone),
-      ]);
-      const services = deduplicateByRequest(
-        Array.isArray(serviceList) ? serviceList : [],
-        false
-      );
-      const productsDeduped = deduplicateByRequest(
-        Array.isArray(productList) ? productList : [],
-        true
-      );
-      const products = groupProductRequests(productsDeduped);
-      setFoundServiceRequests(services);
-      setFoundProductRequests(products);
-      setRequestHistory(phone, services, products);
-    } catch (e) {
-      setError(e?.message || "Failed to load requests. Try again.");
+  const fetchRequestsByPhone = useCallback(
+    async (phoneRaw) => {
+      const phone = (phoneRaw || "").trim();
+      if (!phone) {
+        setError("Enter mobile number to fetch requests.");
+        return;
+      }
+      const locationId = localStorage.getItem("locationId");
+      if (!tenantId || !locationId) {
+        setError("Location not set. Open Home first.");
+        return;
+      }
+      setHasSearched(true);
+      setError("");
+      setLoading(true);
       setFoundServiceRequests([]);
       setFoundProductRequests([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const [serviceList, productList] = await Promise.all([
+          getServiceRequestHistoryByPhone(tenantId, locationId, phone),
+          getProductRequestHistoryByPhone(tenantId, locationId, phone),
+        ]);
+        const services = deduplicateByRequest(
+          Array.isArray(serviceList) ? serviceList : [],
+          false,
+        );
+        const productsDeduped = deduplicateByRequest(
+          Array.isArray(productList) ? productList : [],
+          true,
+        );
+        const products = groupProductRequests(productsDeduped);
+        setFoundServiceRequests(services);
+        setFoundProductRequests(products);
+        setStoredGuestPhone(tenantId, roomId, phone);
+        setRequestHistory(phone, services, products);
+      } catch (e) {
+        setError(e?.message || "Failed to load requests. Try again.");
+        setFoundServiceRequests([]);
+        setFoundProductRequests([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [tenantId, roomId, setRequestHistory],
+  );
+
+  useEffect(() => {
+    const stored = getStoredGuestPhone(tenantId, roomId).trim();
+    setLookupMobile(stored);
+    setFoundServiceRequests([]);
+    setFoundProductRequests([]);
+    setHasSearched(false);
+    setError("");
+
+    if (!stored || !tenantId) return;
+    const locationId = localStorage.getItem("locationId");
+    if (!locationId) return;
+    void fetchRequestsByPhone(stored);
+  }, [tenantId, roomId, fetchRequestsByPhone]);
+
+  const handleLookup = () => fetchRequestsByPhone(lookupMobile);
 
   const openRequestDialog = (request, type) => {
     if (type === "service") {

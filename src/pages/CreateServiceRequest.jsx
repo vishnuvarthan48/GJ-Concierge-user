@@ -11,6 +11,7 @@ import {
   Select,
   CircularProgress,
   IconButton,
+  Alert,
 } from "@mui/material";
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
 import DeleteOutline from "@mui/icons-material/DeleteOutline";
@@ -23,6 +24,22 @@ import { getRoomDetail, getServices } from "../service/RoomService";
 import { saveServiceRequest } from "../service/ServiceRequestService";
 import { getUploadApiUrl } from "../service/ApiUrls";
 import { upload } from "../service/Service";
+import {
+  getStoredGuestPhone,
+  setStoredGuestPhone,
+} from "../utils/guestPhoneStorage";
+
+const extractApiErrorMessage = (source) => {
+  if (!source) return "";
+  if (typeof source === "string") return source;
+  return (
+    source?.error?.detailsMessage ||
+    source?.error?.message ||
+    source?.detailsMessage ||
+    source?.message ||
+    ""
+  );
+};
 
 function CreateServiceRequest() {
   const { tenantId, roomId } = useParams();
@@ -63,39 +80,49 @@ function CreateServiceRequest() {
     }
   }, [selectedServiceFromNav]);
 
+  useEffect(() => {
+    const stored = getStoredGuestPhone(tenantId, roomId);
+    if (stored) setPhoneNumber(stored);
+  }, [tenantId, roomId]);
+
   const selectedService = services.find((s) => s.id === selectedServiceId);
 
   const saveMutation = useMutation({
     mutationFn: async (payload) =>
       saveServiceRequest(tenantId, roomId, payload),
-    onSuccess: (data) => {
-      console.log(data);
-      // Backend may return 200 with error in body (e.g. mobile validation)
-      if (data?.error) {
-        const msg =
-          data.error.message ||
-          data.error.detailsMessage ||
-          "Failed to submit service request.";
+    onSuccess: (data, variables) => {
+      // Backend may return 200 with error in body (e.g. validation, admission required)
+      const errorPayload = data?.error;
+      if (errorPayload) {
+        const msg = extractApiErrorMessage(data) || "Failed to submit service request.";
+        setFormError(msg);
         showSnackbar(msg, "error");
         return;
       }
+      // Guard against malformed/empty success payloads.
+      if (!data?.id) {
+        const msg = "Failed to submit service request.";
+        setFormError(msg);
+        showSnackbar(msg, "error");
+        return;
+      }
+      const savedPhone = variables?.phoneNumber?.trim?.();
+      if (savedPhone) {
+        setStoredGuestPhone(tenantId, roomId, savedPhone);
+      }
+      setFormError("");
       queryClient.invalidateQueries({ queryKey: ["service-requests"] });
-      showSnackbar(
-        data?.error?.detailsMessage ||
-          "Service request submitted successfully.",
-        "success",
-      );
+      showSnackbar("Service request submitted successfully.", "success");
       navigate(`/t/${tenantId}/r/${roomId}`);
     },
     onError: (err) => {
-      console.log(err);
-      const backendMessage =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.error?.detailsMessage;
-      showSnackbar(
-        backendMessage || err?.message || "Failed to submit service request.",
-        "error",
-      );
+      const msg =
+        extractApiErrorMessage(err?.response?.data) ||
+        extractApiErrorMessage(err?.data) ||
+        err?.message ||
+        "Failed to submit service request.";
+      setFormError(msg);
+      showSnackbar(msg, "error");
     },
   });
 
@@ -276,9 +303,9 @@ function CreateServiceRequest() {
         )}
 
         {formError && (
-          <Typography color="error" sx={{ mb: 1 }}>
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormError("")}>
             {formError}
-          </Typography>
+          </Alert>
         )}
 
         <Stack direction="row" spacing={2} sx={{ mt: 3 }}>

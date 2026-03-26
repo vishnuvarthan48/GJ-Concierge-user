@@ -34,7 +34,10 @@ function Explore() {
     },
     enabled: !!tenantId && !!locationId,
   });
-  const categories = Array.isArray(categoriesRaw) ? categoriesRaw : [];
+  const categoriesRawArray = Array.isArray(categoriesRaw) ? categoriesRaw : [];
+  const categories = categoriesRawArray.filter(
+    (c) => c.deleted === false || c.deleted === undefined
+  );
   const categoryOptions = [
     ALL_OPTION,
     ...categories.map((c) => ({

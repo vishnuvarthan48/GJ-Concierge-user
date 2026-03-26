@@ -1,4 +1,4 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useState, useCallback } from "react";
 import { Snackbar, Alert } from "@mui/material";
 
 export const AppContext = createContext();
@@ -140,13 +140,13 @@ export function AppProvider({ children, isDarkMode, setIsDarkMode }) {
 
   const closeSnackbar = () => setSnackbar((s) => ({ ...s, open: false }));
 
-  const setRequestHistory = (phone, serviceList, productList) => {
+  const setRequestHistory = useCallback((phone, serviceList, productList) => {
     setRequestHistoryCache({
       phone: phone || "",
       serviceList: Array.isArray(serviceList) ? serviceList : [],
       productList: Array.isArray(productList) ? productList : [],
     });
-  };
+  }, []);
 
   return (
     <AppContext.Provider

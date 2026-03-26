@@ -34,9 +34,12 @@ function Products({ tenantId, locationId, category }) {
     enabled: !!tenantId && !!locationId,
   });
 
-  const products = Array.isArray(productsRaw)
+  const productsRawArray = Array.isArray(productsRaw)
     ? productsRaw
     : productsRaw?.list ?? [];
+  const products = productsRawArray.filter(
+    (p) => p.deleted === false || p.deleted === undefined
+  );
 
   const { addToCart, cartItems, updateCartItemQuantity } =
     useContext(AppContext);
@@ -51,6 +54,7 @@ function Products({ tenantId, locationId, category }) {
   const isProductAvailable = (product) => product?.available !== false;
 
   const getAvailableStock = (product) => {
+    if (product?.stockable === false) return null;
     const qty = product?.productQuantity;
     if (qty == null || qty === "") return null;
     const n = Number(qty);
@@ -131,11 +135,7 @@ function Products({ tenantId, locationId, category }) {
             >
               <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
                 <Stack direction="row" spacing={2} alignItems="flex-start">
-                  <Box sx={{ fontSize: { xs: "2rem", sm: "2.5rem" } }}>
-                    {product.icon}
-                  </Box>
-
-                  <Box sx={{ flex: 1 }}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography
                       variant="subtitle1"
                       sx={{ fontWeight: "bold", mb: 0.5 }}
@@ -176,88 +176,131 @@ function Products({ tenantId, locationId, category }) {
                       </Typography>
                     )}
 
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        fontWeight: "bold",
+                        color: "primary.main",
+                        fontSize: { xs: "0.95rem", sm: "1rem" },
+                      }}
                     >
+                      ₹{product.price}
+                    </Typography>
+                  </Box>
+
+                  <Stack alignItems="center" spacing={1.5} sx={{ flexShrink: 0 }}>
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: 2,
+                        overflow: "hidden",
+                        bgcolor: "action.hover",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {(() => {
+                        const imageUrl =
+                          product.coverImage ||
+                          product.attachments?.[0]?.attachment?.mediaUrl;
+                        if (imageUrl) {
+                          return (
+                            <Box
+                              component="img"
+                              src={imageUrl}
+                              alt=""
+                              sx={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          );
+                        }
+                        return (
+                          <Box
+                            sx={{
+                              width: "100%",
+                              height: "100%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "2rem",
+                              color: "text.secondary",
+                            }}
+                          >
+                            {product.icon || "📦"}
+                          </Box>
+                        );
+                      })()}
+                    </Box>
+
+                    {!available || (stock !== null && stock <= 0) ? (
                       <Typography
-                        variant="subtitle2"
+                        variant="body2"
+                        color="text.secondary"
                         sx={{
-                          fontWeight: "bold",
-                          color: "primary.main",
-                          fontSize: { xs: "0.95rem", sm: "1rem" },
+                          fontSize: "0.75rem",
+                          fontStyle: "italic",
+                          textAlign: "center",
                         }}
                       >
-                        ₹{product.price}
+                        Not available
                       </Typography>
-
-                      {!available || (stock !== null && stock <= 0) ? (
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{
-                            fontSize: "0.75rem",
-                            fontStyle: "italic",
-                          }}
-                        >
-                          Not available
-                        </Typography>
-                      ) : quantity === 0 ? (
+                    ) : quantity === 0 ? (
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={() => handleAddProduct(product)}
+                        disabled={!canAdd}
+                        sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
+                      >
+                        Add to Cart
+                      </Button>
+                    ) : (
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        alignItems="center"
+                      >
                         <Button
                           size="small"
-                          variant="contained"
-                          onClick={() => handleAddProduct(product)}
-                          disabled={!canAdd}
-                          sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
+                          variant="outlined"
+                          onClick={() => handleDecrement(product.id)}
+                          sx={{
+                            minWidth: "32px",
+                            p: 0.5,
+                            fontSize: "0.85rem",
+                          }}
                         >
-                          Add to Cart
+                          −
                         </Button>
-                      ) : (
-                        <Stack
-                          direction="row"
-                          spacing={0.5}
-                          alignItems="center"
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            width: "24px",
+                            textAlign: "center",
+                            fontWeight: "bold",
+                          }}
                         >
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={() => handleDecrement(product.id)}
-                            sx={{
-                              minWidth: "32px",
-                              p: 0.5,
-                              fontSize: "0.85rem",
-                            }}
-                          >
-                            −
-                          </Button>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              width: "24px",
-                              textAlign: "center",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            {quantity}
-                          </Typography>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={() => handleIncrement(product.id, product)}
-                            disabled={!canAdd}
-                            sx={{
-                              minWidth: "32px",
-                              p: 0.5,
-                              fontSize: "0.85rem",
-                            }}
-                          >
-                            +
-                          </Button>
-                        </Stack>
-                      )}
-                    </Stack>
-                  </Box>
+                          {quantity}
+                        </Typography>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => handleIncrement(product.id, product)}
+                          disabled={!canAdd}
+                          sx={{
+                            minWidth: "32px",
+                            p: 0.5,
+                            fontSize: "0.85rem",
+                          }}
+                        >
+                          +
+                        </Button>
+                      </Stack>
+                    )}
+                  </Stack>
                 </Stack>
               </CardContent>
             </Card>

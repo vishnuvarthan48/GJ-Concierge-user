@@ -64,9 +64,12 @@ function Home() {
       if (tenantId && idToUse) {
         try {
           const categoriesData = await getCategories(tenantId, idToUse);
-          const list = Array.isArray(categoriesData)
+          const raw = Array.isArray(categoriesData)
             ? categoriesData
             : categoriesData?.list ?? [];
+          const list = raw.filter(
+            (c) => c.deleted === false || c.deleted === undefined
+          );
           setCategories(list);
         } catch {
           setCategoriesError(true);
@@ -93,9 +96,12 @@ function Home() {
     enabled: !!tenantId && !!effectiveLocationId && !loading,
   });
 
-  const services = Array.isArray(servicesList)
+  const servicesRaw = Array.isArray(servicesList)
     ? servicesList
     : servicesList?.list ?? [];
+  const services = servicesRaw.filter(
+    (s) => s.deleted === false || s.deleted === undefined
+  );
 
   const q = (searchQuery || "").trim().toLowerCase();
   const filteredCategories = q

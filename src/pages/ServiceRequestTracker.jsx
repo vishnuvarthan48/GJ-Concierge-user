@@ -1,4 +1,4 @@
-import { Box, Typography, CircularProgress, IconButton } from "@mui/material";
+import { Box, Typography, CircularProgress, IconButton, Stack } from "@mui/material";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import CheckCircle from "@mui/icons-material/CheckCircle";
 import { useParams, useNavigate } from "react-router-dom";
@@ -246,6 +246,44 @@ function ServiceRequestTracker() {
                           >
                             {comment}
                           </Typography>
+                        )}
+                        {Array.isArray(h?.attachments) && h.attachments.length > 0 && (
+                          <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 1 }}>
+                            {h.attachments.map((at, i) => {
+                              const url = at?.attachment?.mediaUrl;
+                              if (!url) return null;
+                              return (
+                                <Box
+                                  key={at?.id ?? i}
+                                  component="a"
+                                  href={url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  sx={{
+                                    display: "block",
+                                    width: 72,
+                                    height: 72,
+                                    borderRadius: 1,
+                                    overflow: "hidden",
+                                    border: "1px solid",
+                                    borderColor: "divider",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <Box
+                                    component="img"
+                                    src={url}
+                                    alt=""
+                                    sx={{
+                                      width: "100%",
+                                      height: "100%",
+                                      objectFit: "cover",
+                                    }}
+                                  />
+                                </Box>
+                              );
+                            })}
+                          </Stack>
                         )}
                       </Box>
                     </Box>

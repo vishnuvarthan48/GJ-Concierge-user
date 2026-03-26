@@ -27,7 +27,7 @@ function Services({ tenantId, locationId, category }) {
   };
 
   const {
-    data: services = [],
+    data: servicesRaw = [],
     isLoading,
     isError,
   } = useQuery({
@@ -35,6 +35,10 @@ function Services({ tenantId, locationId, category }) {
     queryFn: fetchServices,
     enabled: !!tenantId && !!locationId,
   });
+
+  const services = (Array.isArray(servicesRaw) ? servicesRaw : []).filter(
+    (s) => s.deleted === false || s.deleted === undefined
+  );
 
   const handleServiceClick = (service) => {
     if (!tenantId || !roomId) return;

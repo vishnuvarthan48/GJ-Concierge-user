@@ -32,7 +32,8 @@ export async function Initialize() {
       } else {
         console.error("Error:", error.message);
       }
-      return error;
+      // Important: reject so callers enter catch/onError flows.
+      return Promise.reject(error);
     },
   );
 }
