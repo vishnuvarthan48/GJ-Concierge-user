@@ -6,6 +6,8 @@ import {
   Tab,
   TextField,
   Autocomplete,
+  Paper,
+  Stack,
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { AppContext } from "../context/AppContext";
@@ -83,16 +85,9 @@ function Explore() {
     <Box sx={{ width: "100%" }}>
       <Header />
 
-      <Box sx={{ px: { xs: 1, sm: 2 }, py: { xs: 2, sm: 3 }, pb: 12 }}>
-        {/* Category Filter */}
-        <Box
-          sx={{
-            mb: 2,
-            p: 2,
-            bgcolor: "primary.light",
-            borderRadius: "8px",
-          }}
-        >
+      <Box sx={{ px: { xs: 0.5, sm: 1 }, py: { xs: 1.5, sm: 2 }, pb: 12 }}>
+        <Paper sx={{ mb: 2, p: 1.5 }}>
+          <Stack spacing={1.25}>
           <Autocomplete
             size="small"
             options={categoryOptions}
@@ -109,17 +104,15 @@ function Explore() {
               },
             }}
           />
-        </Box>
-
-        {/* Search Input */}
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Search..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-          sx={{ mb: 2 }}
-        />
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+          />
+          </Stack>
+        </Paper>
 
         {/* Tabs */}
         <Tabs
@@ -128,10 +121,8 @@ function Explore() {
           variant="fullWidth"
           sx={{
             mb: 2,
-            "& .MuiTabs-indicator": {
-              bgcolor: "primary.main",
-              height: 3,
-            },
+            bgcolor: "background.paper",
+            borderRadius: 2,
           }}
         >
           <Tab

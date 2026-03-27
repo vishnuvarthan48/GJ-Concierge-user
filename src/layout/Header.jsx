@@ -101,7 +101,12 @@ function Header() {
       open={cartOpen}
       onClose={() => setCartOpen(false)}
       PaperProps={{
-        sx: { maxWidth: "100%", width: { xs: "100%", sm: 400 } },
+        sx: {
+          maxWidth: "100%",
+          width: { xs: "100%", sm: 400 },
+          borderTopLeftRadius: { xs: 18, sm: 0 },
+          borderBottomLeftRadius: { xs: 18, sm: 0 },
+        },
       }}
     >
       <Box
@@ -148,7 +153,8 @@ function Header() {
                     p: 2,
                     border: "1px solid",
                     borderColor: "divider",
-                    borderRadius: "8px",
+                    borderRadius: 2,
+                    bgcolor: "background.paper",
                   }}
                 >
                   <Stack
@@ -258,7 +264,7 @@ function Header() {
                 variant="contained"
                 fullWidth
                 onClick={handleConfirmOrder}
-                sx={{ py: 1.5 }}
+                sx={{ py: 1.4 }}
               >
                 Confirm Order
               </Button>
@@ -347,6 +353,7 @@ function Header() {
       open={checkoutOpen}
       onClose={() => setCheckoutOpen(false)}
       fullWidth
+      PaperProps={{ sx: { m: 1.5 } }}
     >
       <DialogTitle>Checkout</DialogTitle>
       <DialogContent>
@@ -399,10 +406,38 @@ function Header() {
     <>
       <Box
         sx={{
-          bgcolor: "primary.main",
+          background: (theme) =>
+            `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 55%, ${theme.palette.secondary.main} 100%)`,
           color: "primary.contrastText",
-          p: { xs: 1.5, sm: 2 },
-          borderRadius: "0 0 12px 12px",
+          p: { xs: 1.75, sm: 2 },
+          borderRadius: 1,
+          border: "1px solid rgba(255,255,255,0.14)",
+          position: "relative",
+          overflow: "hidden",
+          boxShadow: (theme) =>
+            `0 14px 30px ${theme.palette.mode === "dark" ? "rgba(0,0,0,0.35)" : "rgba(15,110,140,0.30)"}`,
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            width: 180,
+            height: 180,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.14)",
+            top: -90,
+            right: -60,
+            pointerEvents: "none",
+          },
+          "&::after": {
+            content: '""',
+            position: "absolute",
+            width: 140,
+            height: 140,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.08)",
+            bottom: -85,
+            left: -40,
+            pointerEvents: "none",
+          },
         }}
       >
         {/* Avatar, Welcome Section, and Cart Icon */}
@@ -410,7 +445,7 @@ function Header() {
           direction="row"
           spacing={2}
           alignItems="center"
-          sx={{ mb: 2 }}
+          sx={{ mb: 1.5, position: "relative", zIndex: 1 }}
           justifyContent="space-between"
         >
           <Stack
@@ -423,8 +458,10 @@ function Header() {
               sx={{
                 width: 48,
                 height: 48,
-                bgcolor: "rgba(255, 255, 255, 0.3)",
+                bgcolor: "rgba(255, 255, 255, 0.16)",
                 fontSize: "1.5rem",
+                border: "1px solid rgba(255, 255, 255, 0.22)",
+                backdropFilter: "blur(8px)",
               }}
             >
               U
@@ -437,7 +474,9 @@ function Header() {
                 variant="h6"
                 sx={{
                   fontWeight: "bold",
-                  fontSize: { xs: "1rem", sm: "1.1rem" },
+                  fontSize: { xs: "1.02rem", sm: "1.1rem" },
+                lineHeight: 1.25,
+                  pr: 1,
                 }}
               >
                 {roomDisplayName || "…"}
@@ -449,7 +488,13 @@ function Header() {
           <Stack direction="row" spacing={1} alignItems="center">
             <IconButton
               onClick={() => setIsDarkMode && setIsDarkMode(!isDarkMode)}
-              sx={{ color: "inherit" }}
+              sx={{
+                color: "inherit",
+                bgcolor: "rgba(255,255,255,0.14)",
+                border: "1px solid rgba(255,255,255,0.18)",
+                backdropFilter: "blur(8px)",
+                "&:hover": { bgcolor: "rgba(255,255,255,0.22)" },
+              }}
               aria-label="Toggle theme"
               size="small"
             >
@@ -458,7 +503,13 @@ function Header() {
 
             <IconButton
               onClick={() => setCartOpen(true)}
-              sx={{ color: "inherit" }}
+              sx={{
+                color: "inherit",
+                bgcolor: "rgba(255,255,255,0.14)",
+                border: "1px solid rgba(255,255,255,0.18)",
+                backdropFilter: "blur(8px)",
+                "&:hover": { bgcolor: "rgba(255,255,255,0.22)" },
+              }}
             >
               <Badge badgeContent={cartItems.length} color="error">
                 <CartIcon />
@@ -475,22 +526,25 @@ function Header() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           sx={{
+            position: "relative",
+            zIndex: 1,
             "& .MuiOutlinedInput-root": {
-              bgcolor: "rgba(255, 255, 255, 0.95)",
-              color: "#333",
-              borderRadius: "8px",
+              bgcolor: "rgba(255, 255, 255, 0.96)",
+              color: "text.primary",
+              borderRadius: 99,
+              minHeight: 44,
               "& fieldset": {
-                borderColor: "transparent",
+                borderColor: "rgba(255,255,255,0.2)",
               },
               "&:hover fieldset": {
-                borderColor: "transparent",
+                borderColor: "rgba(255,255,255,0.35)",
               },
               "&.Mui-focused fieldset": {
-                borderColor: "transparent",
+                borderColor: "rgba(255,255,255,0.5)",
               },
             },
             "& .MuiOutlinedInput-input::placeholder": {
-              color: "#999",
+              color: "text.secondary",
               opacity: 1,
             },
           }}

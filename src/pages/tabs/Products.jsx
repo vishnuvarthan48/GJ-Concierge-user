@@ -8,6 +8,7 @@ import {
   Button,
   CircularProgress,
 } from "@mui/material";
+import { alpha } from "@mui/material";
 import { AppContext } from "../../context/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -111,7 +112,7 @@ function Products({ tenantId, locationId, category }) {
     <Stack spacing={2}>
       {!products || products.length === 0 ? (
         <Box sx={{ textAlign: "center", py: 4 }}>
-          <Typography color="textSecondary">
+          <Typography color="text.secondary">
             No products available for this category
           </Typography>
         </Box>
@@ -126,10 +127,9 @@ function Products({ tenantId, locationId, category }) {
             <Card
               key={product.id}
               sx={{
-                transition: "all 0.3s ease",
                 opacity: available ? 1 : 0.85,
                 "&:hover": {
-                  boxShadow: 3,
+                  boxShadow: 4,
                 },
               }}
             >
@@ -144,7 +144,7 @@ function Products({ tenantId, locationId, category }) {
                     </Typography>
                     <Typography
                       variant="caption"
-                      color="textSecondary"
+                      color="text.secondary"
                       sx={{ display: "block", mb: 1 }}
                     >
                       {product.description}
@@ -195,7 +195,7 @@ function Products({ tenantId, locationId, category }) {
                         height: 80,
                         borderRadius: 2,
                         overflow: "hidden",
-                        bgcolor: "action.hover",
+                        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
                         flexShrink: 0,
                       }}
                     >

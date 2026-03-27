@@ -12,6 +12,7 @@ import {
   CircularProgress,
   IconButton,
   Alert,
+  Paper,
 } from "@mui/material";
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
 import DeleteOutline from "@mui/icons-material/DeleteOutline";
@@ -190,8 +191,9 @@ function CreateServiceRequest() {
       <Box
         component="form"
         onSubmit={handleSubmit}
-        sx={{ px: { xs: 1, sm: 2 }, py: { xs: 2, sm: 3 }, pb: 12 }}
+        sx={{ px: { xs: 0.5, sm: 1 }, py: { xs: 1.5, sm: 2 }, pb: 12 }}
       >
+        <Paper sx={{ p: 1.5, mb: 2 }}>
         <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: "bold" }}>
           Service
         </Typography>
@@ -246,7 +248,9 @@ function CreateServiceRequest() {
           sx={{ mb: 2 }}
           placeholder="Additional details..."
         />
+        </Paper>
 
+        <Paper sx={{ p: 1.5, mb: 2 }}>
         <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: "bold" }}>
           Upload photos
         </Typography>
@@ -301,6 +305,7 @@ function CreateServiceRequest() {
             ))}
           </Stack>
         )}
+        </Paper>
 
         {formError && (
           <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormError("")}>
@@ -308,7 +313,7 @@ function CreateServiceRequest() {
           </Alert>
         )}
 
-        <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
+        <Stack direction="row" spacing={1.5} sx={{ mt: 2 }}>
           <Button
             type="button"
             variant="outlined"

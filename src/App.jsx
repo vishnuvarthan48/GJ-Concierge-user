@@ -10,14 +10,21 @@ import ProductRequestTracker from "./pages/ProductRequestTracker";
 
 function App({ isDarkMode, setIsDarkMode }) {
   return (
-    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "background.default",
+      }}
+    >
       <Container
         maxWidth="sm"
         sx={{
           flex: 1,
           pb: { xs: 10, sm: 8 },
-          px: 0,
-          py: 0,
+          px: { xs: 1, sm: 1.5 },
+          py: { xs: 1, sm: 1.5 },
         }}
       >
         <Routes>

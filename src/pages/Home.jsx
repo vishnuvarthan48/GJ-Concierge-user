@@ -6,6 +6,7 @@ import {
   Typography,
   CircularProgress,
   Chip,
+  Paper,
 } from "@mui/material";
 import { useState, useContext, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -123,7 +124,7 @@ function Home() {
   return (
     <Box sx={{ width: "100%" }}>
       <Header title={headerTitle} />
-      <Box sx={{ px: { xs: 1, sm: 2 }, py: { xs: 2, sm: 3 } }}>
+      <Box sx={{ px: { xs: 0.5, sm: 1 }, py: { xs: 1.5, sm: 2 } }}>
         {loading && (
           <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
             <CircularProgress />
@@ -143,49 +144,51 @@ function Home() {
 
         {!loading && (
           <>
-            <Typography
-              variant="subtitle2"
-              sx={{ mb: 2, fontWeight: "bold", color: "text.primary" }}
-            >
-              Categories
-            </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                gap: 1,
-                overflowX: "auto",
-                pb: 1,
-                mb: 3,
-                "&::-webkit-scrollbar": { height: 6 },
-                "&::-webkit-scrollbar-thumb": {
-                  bgcolor: "action.hover",
-                  borderRadius: 3,
-                },
-              }}
-            >
-              {filteredCategories.map((category) => (
-                <Chip
-                  key={category.id}
-                  label={category.name || category.title || category.id}
-                  onClick={() => {
-                    const categoryPayload = {
-                      id: category.id,
-                      name: category.name || category.title || String(category.id),
-                    };
-                    setSelectedCategory(categoryPayload);
-                    navigate(`/t/${tenantId}/r/${roomId}/explore`, {
-                      state: { category: categoryPayload },
-                    });
-                  }}
-                  sx={{
-                    flexShrink: 0,
-                    cursor: "pointer",
-                    "&:hover": { bgcolor: "primary.light" },
-                  }}
-                />
-              ))}
-            </Box>
+            <Paper sx={{ p: 1.5, mb: 2.5 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ mb: 1.25, fontWeight: "bold", color: "text.primary" }}
+              >
+                Categories
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: 1,
+                  overflowX: "auto",
+                  pb: 0.5,
+                  "&::-webkit-scrollbar": { height: 4 },
+                  "&::-webkit-scrollbar-thumb": {
+                    bgcolor: "action.hover",
+                    borderRadius: 3,
+                  },
+                }}
+              >
+                {filteredCategories.map((category) => (
+                  <Chip
+                    key={category.id}
+                    label={category.name || category.title || category.id}
+                    onClick={() => {
+                      const categoryPayload = {
+                        id: category.id,
+                        name: category.name || category.title || String(category.id),
+                      };
+                      setSelectedCategory(categoryPayload);
+                      navigate(`/t/${tenantId}/r/${roomId}/explore`, {
+                        state: { category: categoryPayload },
+                      });
+                    }}
+                    sx={{
+                      flexShrink: 0,
+                      cursor: "pointer",
+                      bgcolor: "background.default",
+                      "&:hover": { bgcolor: "primary.light", color: "primary.contrastText" },
+                    }}
+                  />
+                ))}
+              </Box>
+            </Paper>
 
             <Typography
               variant="subtitle2"
@@ -302,7 +305,7 @@ function Home() {
                             color: "primary.contrastText",
                             px: 1,
                             py: 0.5,
-                            borderRadius: "4px",
+                            borderRadius: 1,
                           }}
                         >
                           →

@@ -41,9 +41,15 @@ function BottomNavBar() {
       }}
     >
       <Paper
-        elevation={3}
+        elevation={0}
         sx={{
-          borderRadius: "12px 12px 0 0",
+          borderRadius: "18px 18px 0 0",
+          border: "1px solid",
+          borderColor: "divider",
+          borderBottom: "none",
+          bgcolor: "background.paper",
+          boxShadow: (theme) =>
+            `0 -10px 24px ${theme.palette.mode === "dark" ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0.08)"}`,
         }}
       >
         <BottomNavigation
@@ -51,13 +57,8 @@ function BottomNavBar() {
           onChange={(event, newValue) => newValue}
           showLabels
           sx={{
-            "& .MuiBottomNavigationAction-root": {
-              minWidth: "auto",
-              py: 1,
-            },
-            "& .MuiBottomNavigationAction-label": {
-              fontSize: { xs: "0.75rem", sm: "0.875rem" },
-              display: "block",
+            "& .MuiBottomNavigationAction-root.Mui-selected": {
+              color: "primary.main",
             },
           }}
         >

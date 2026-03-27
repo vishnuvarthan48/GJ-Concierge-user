@@ -21,6 +21,8 @@ import {
   StepLabel,
   Tabs,
   Tab,
+  Paper,
+  Alert,
 } from "@mui/material";
 import Search from "@mui/icons-material/Search";
 import Phone from "@mui/icons-material/Phone";
@@ -101,11 +103,11 @@ function groupProductRequests(list) {
 
 function getStatusColor(statusName) {
   const n = String(statusName || "").toUpperCase();
-  if (n.includes("NEW") || n.includes("OPEN")) return { bgcolor: "#e3f2fd", color: "#1565c0" };
-  if (n.includes("ASSIGNED")) return { bgcolor: "#fff3e0", color: "#e65100" };
-  if (n.includes("PROGRESS") || n.includes("IN_PROGRESS")) return { bgcolor: "#f3e5f5", color: "#7b1fa2" };
-  if (n.includes("COMPLETED") || n.includes("DONE")) return { bgcolor: "#e8f5e9", color: "#2e7d32" };
-  if (n.includes("CLOSED") || n.includes("CANCELLED")) return { bgcolor: "#fce4ec", color: "#c2185b" };
+  if (n.includes("NEW") || n.includes("OPEN")) return { bgcolor: "info.light", color: "info.dark" };
+  if (n.includes("ASSIGNED")) return { bgcolor: "warning.light", color: "warning.dark" };
+  if (n.includes("PROGRESS") || n.includes("IN_PROGRESS")) return { bgcolor: "secondary.light", color: "secondary.dark" };
+  if (n.includes("COMPLETED") || n.includes("DONE")) return { bgcolor: "success.light", color: "success.dark" };
+  if (n.includes("CLOSED") || n.includes("CANCELLED")) return { bgcolor: "error.light", color: "error.dark" };
   return { bgcolor: "action.hover", color: "text.secondary" };
 }
 
@@ -233,7 +235,8 @@ function Requests() {
     <Box sx={{ width: "100%", minHeight: "100vh", pb: 10 }}>
       <Header title="Request History" />
 
-      <Box sx={{ px: 2, py: 3 }}>
+      <Box sx={{ px: 0.5, py: 1.5 }}>
+        <Paper sx={{ p: 1.5, mb: 2 }}>
         <Typography
           variant="subtitle1"
           sx={{ mb: 2, fontWeight: 600, color: "text.primary" }}
@@ -298,16 +301,12 @@ function Requests() {
             {loading ? "Searching..." : "Search"}
           </Button>
         </Stack>
+        </Paper>
 
         {error && (
-          <Typography
-            variant="body2"
-            color="error"
-            sx={{ mb: 2 }}
-            role="alert"
-          >
+          <Alert severity="error" sx={{ mb: 2 }} role="alert">
             {error}
-          </Typography>
+          </Alert>
         )}
 
         <Tabs
@@ -339,7 +338,8 @@ function Requests() {
               sx={{
                 bgcolor: "background.paper",
                 borderRadius: 2,
-                boxShadow: 1,
+                boxShadow: (theme) =>
+                  `0 8px 18px ${theme.palette.mode === "dark" ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.07)"}`,
                 overflow: "hidden",
               }}
             >

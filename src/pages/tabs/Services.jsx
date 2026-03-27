@@ -50,13 +50,13 @@ function Services({ tenantId, locationId, category }) {
   const getPriorityColor = (priority) => {
     switch (priority) {
       case "High":
-        return "#d32f2f";
+        return "error.main";
       case "Medium":
-        return "#f57c00";
+        return "warning.main";
       case "Low":
-        return "#388e3c";
+        return "success.main";
       default:
-        return "#666";
+        return "text.secondary";
     }
   };
 
@@ -83,7 +83,7 @@ function Services({ tenantId, locationId, category }) {
     <Stack spacing={2}>
       {!services || services.length === 0 ? (
         <Box sx={{ textAlign: "center", py: 4 }}>
-          <Typography color="textSecondary">
+          <Typography color="text.secondary">
             No services available for this category
           </Typography>
         </Box>
@@ -91,14 +91,13 @@ function Services({ tenantId, locationId, category }) {
         services.map((service) => (
           <Card
             key={service.id}
-            sx={{
-              cursor: "pointer",
-              transition: "all 0.3s ease",
-              "&:hover": {
-                boxShadow: 3,
-                transform: "translateY(-2px)",
-              },
-            }}
+              sx={{
+                cursor: "pointer",
+                "&:hover": {
+                  boxShadow: 4,
+                  transform: "translateY(-2px)",
+                },
+              }}
             onClick={() => handleServiceClick(service)}
           >
             <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
@@ -116,7 +115,7 @@ function Services({ tenantId, locationId, category }) {
                   </Typography>
                   <Typography
                     variant="caption"
-                    color="textSecondary"
+                      color="text.secondary"
                     sx={{ display: "block", mb: 1 }}
                   >
                     {service.description}
