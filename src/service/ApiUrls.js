@@ -18,11 +18,15 @@ export const getCategoryApiUrl = (tenantId, locationId, categoryId) =>
 export const getCategoriesByTypeApiUrl = (tenantId, locationId, type) =>
   `${BASE_CONCIERGE_URL}${tenantId}/location/${locationId}/category/type/${type}`;
 
-// Service APIs
-export const getServicesApiUrl = (tenantId, locationId) =>
-  `${BASE_CONCIERGE_URL}${tenantId}/location/${locationId}/services`;
-export const getServicesByCategoryApiUrl = (tenantId, locationId, categoryId) =>
-  `${BASE_CONCIERGE_URL}${tenantId}/location/${locationId}/category/${categoryId}/services`;
+// Service APIs (optional roomId filters to services visible for that room's type)
+export const getServicesApiUrl = (tenantId, locationId, roomId) => {
+  const base = `${BASE_CONCIERGE_URL}${tenantId}/location/${locationId}/services`;
+  return roomId ? `${base}?roomId=${encodeURIComponent(roomId)}` : base;
+};
+export const getServicesByCategoryApiUrl = (tenantId, locationId, categoryId, roomId) => {
+  const base = `${BASE_CONCIERGE_URL}${tenantId}/location/${locationId}/category/${categoryId}/services`;
+  return roomId ? `${base}?roomId=${encodeURIComponent(roomId)}` : base;
+};
 export const getRoomServicesApiUrl = (tenantId, roomId) =>
   `${BASE_CONCIERGE_URL}${tenantId}/room/${roomId}/room-service`;
 

@@ -66,9 +66,9 @@ function CreateServiceRequest() {
 
   const locId = roomDetails?.location?.id || localStorage.getItem("locationId");
   const { data: servicesList = [] } = useQuery({
-    queryKey: ["services", tenantId, locId],
-    queryFn: () => getServices(tenantId, locId),
-    enabled: !!tenantId && !!locId,
+    queryKey: ["services", tenantId, locId, roomId],
+    queryFn: () => getServices(tenantId, locId, roomId),
+    enabled: !!tenantId && !!locId && !!roomId,
   });
 
   const services = Array.isArray(servicesList)

@@ -34,9 +34,9 @@ export const getCategories = async (tenantId, locationId) => {
   }
 };
 
-export const getServices = async (tenantId, locationId) => {
+export const getServices = async (tenantId, locationId, roomId) => {
   try {
-    return await get(getServicesApiUrl(tenantId, locationId));
+    return await get(getServicesApiUrl(tenantId, locationId, roomId));
   } catch (error) {
     console.error("Error fetching services:", error);
     return [];
@@ -47,10 +47,11 @@ export const getServicesByCategory = async (
   tenantId,
   locationId,
   categoryId,
+  roomId,
 ) => {
   try {
     return await get(
-      getServicesByCategoryApiUrl(tenantId, locationId, categoryId),
+      getServicesByCategoryApiUrl(tenantId, locationId, categoryId, roomId),
     );
   } catch (error) {
     console.error("Error fetching services by category:", error);

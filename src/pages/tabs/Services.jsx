@@ -21,8 +21,8 @@ function Services({ tenantId, locationId, category }) {
 
   const fetchServices = async () => {
     const url = category
-      ? getServicesByCategoryApiUrl(tenantId, locationId, category)
-      : getServicesApiUrl(tenantId, locationId);
+      ? getServicesByCategoryApiUrl(tenantId, locationId, category, roomId)
+      : getServicesApiUrl(tenantId, locationId, roomId);
     return await get(url);
   };
 
@@ -31,9 +31,9 @@ function Services({ tenantId, locationId, category }) {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["services", tenantId, locationId, category],
+    queryKey: ["services", tenantId, locationId, category, roomId],
     queryFn: fetchServices,
-    enabled: !!tenantId && !!locationId,
+    enabled: !!tenantId && !!locationId && !!roomId,
   });
 
   const services = (Array.isArray(servicesRaw) ? servicesRaw : []).filter(

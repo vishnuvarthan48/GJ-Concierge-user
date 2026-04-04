@@ -406,13 +406,15 @@ function Header() {
     <>
       <Box
         sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: (theme) => theme.zIndex.appBar,
           background: (theme) =>
             `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 55%, ${theme.palette.secondary.main} 100%)`,
           color: "primary.contrastText",
           p: { xs: 1.75, sm: 2 },
           borderRadius: 1,
           border: "1px solid rgba(255,255,255,0.14)",
-          position: "relative",
           overflow: "hidden",
           boxShadow: (theme) =>
             `0 14px 30px ${theme.palette.mode === "dark" ? "rgba(0,0,0,0.35)" : "rgba(15,110,140,0.30)"}`,

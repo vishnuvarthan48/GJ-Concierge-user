@@ -6,12 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "../layout/Header";
 import BottomNavBar from "../layout/BottomNavBar";
 import { getProductRequestDetail } from "../service/ProductRequestService";
-
-function formatDate(value) {
-  if (value == null) return "—";
-  const d = new Date(typeof value === "number" ? value : value);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
-}
+import { formatRequestDateTime } from "../utils/formatRequestDateTime";
 
 function ProductRequestTracker() {
   const { tenantId, roomId, requestId } = useParams();
@@ -265,7 +260,7 @@ function ProductRequestTracker() {
                             opacity: isCurrent ? 0.9 : 1,
                           }}
                         >
-                          {formatDate(date)}
+                          {formatRequestDateTime(date)}
                         </Typography>
                         {comment && (
                           <Typography

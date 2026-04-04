@@ -92,9 +92,9 @@ function Home() {
     isLoading: isServicesLoading,
     isError: isServicesError,
   } = useQuery({
-    queryKey: ["services", tenantId, effectiveLocationId],
-    queryFn: () => getServices(tenantId, effectiveLocationId),
-    enabled: !!tenantId && !!effectiveLocationId && !loading,
+    queryKey: ["services", tenantId, effectiveLocationId, roomId],
+    queryFn: () => getServices(tenantId, effectiveLocationId, roomId),
+    enabled: !!tenantId && !!effectiveLocationId && !!roomId && !loading,
   });
 
   const servicesRaw = Array.isArray(servicesList)

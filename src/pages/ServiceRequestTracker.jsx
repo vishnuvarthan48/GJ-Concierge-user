@@ -6,12 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "../layout/Header";
 import BottomNavBar from "../layout/BottomNavBar";
 import { getServiceRequestDetail } from "../service/ServiceRequestService";
-
-function formatDate(value) {
-  if (value == null) return "—";
-  const d = new Date(typeof value === "number" ? value : value);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
-}
+import { formatRequestDateTime } from "../utils/formatRequestDateTime";
 
 function ServiceRequestTracker() {
   const { tenantId, roomId, requestId } = useParams();
@@ -233,7 +228,7 @@ function ServiceRequestTracker() {
                             opacity: isCurrent ? 0.9 : 1,
                           }}
                         >
-                          {formatDate(date)}
+                          {formatRequestDateTime(date)}
                         </Typography>
                         {comment && (
                           <Typography

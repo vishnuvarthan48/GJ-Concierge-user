@@ -39,14 +39,9 @@ import {
   getStoredGuestPhone,
   setStoredGuestPhone,
 } from "../utils/guestPhoneStorage";
+import { formatRequestDateTime } from "../utils/formatRequestDateTime";
 
 const DEFAULT_STEPS = ["Open", "Assigned", "In Progress", "Completed", "Closed"];
-
-function formatDate(value) {
-  if (!value) return "—";
-  const d = new Date(typeof value === "number" ? value : value);
-  return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString();
-}
 
 function getStatusLabel(item) {
   const sr = item.serviceRequest ?? item;
@@ -392,7 +387,7 @@ function Requests() {
                       color="text.secondary"
                       sx={{ mt: 0.5 }}
                     >
-                      {formatDate(r.createdOn ?? r.createdAt ?? r.serviceRequest?.updatedDate)}
+                      {formatRequestDateTime(r.createdOn ?? r.createdAt ?? r.serviceRequest?.updatedDate)}
                     </Typography>
                   }
                 />
@@ -454,7 +449,7 @@ function Requests() {
               )}
               <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: "block" }}>
                 Created{" "}
-                {formatDate(
+                {formatRequestDateTime(
                   sr?.updatedDate ?? activeRequest.createdOn ?? activeRequest.createdAt ?? activeRequest.serviceRequest?.updatedDate,
                 )}
               </Typography>
